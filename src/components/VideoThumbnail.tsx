@@ -52,7 +52,6 @@ export function VideoThumbnail({
       <video
         ref={videoRef}
         src={src}
-        poster={`${src}#t=1`}
         className="w-full h-full object-cover"
         playsInline
       />
