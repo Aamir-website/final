@@ -488,7 +488,7 @@ function App() {
               SHOW REEL
             </h3>
             <div className="max-w-4xl mx-auto">
-              <LazyVideo 
+              <VideoThumbnail
                 src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
                 title="SHOW REEL"
                 isShowreel={true}
@@ -513,7 +513,7 @@ function App() {
       "https://ia600904.us.archive.org/35/items/portfolio_202508/Young%20Actresses%20Who%20Tragically%20Passed%20Away.mp4",
       "https://ia601002.us.archive.org/33/items/sample-1-1/sample1%20%281%29.mp4",
     ].map((url, i) => (
-      <LazyVideo
+      <VideoThumbnail
         key={i}
         src={url}
         title={`PROJECT ${String(i + 1).padStart(2, "0")}`}
@@ -543,7 +543,7 @@ function App() {
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4",
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
     ].map((url, i) => (
-      <LazyVideo
+      <VideoThumbnail
         key={i}
         src={url}
         title={`SOCIAL ${String(i + 1).padStart(2, "0")}`}
