@@ -48,7 +48,15 @@ export function VideoThumbnail({
       className={`relative group cursor-pointer ${aspectClasses} rounded-xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 ${className}`}
       onClick={handleClick}
     >
-
+      {/* Video with thumbnail poster */}
+      <video
+        ref={videoRef}
+        src={src}
+        poster={`${src}#t=1`}
+        className="w-full h-full object-cover"
+        playsInline
+      />
+ 
       {/* Play button overlay */}
       {!isPlaying && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/30">
