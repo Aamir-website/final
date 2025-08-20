@@ -171,7 +171,7 @@ function App() {
       gsap.to(backgroundTextRef.current, {
         y: -300,
         opacity: 1,
-        scaleY: 2,
+        scaleY: 1,
         scrollTrigger: {
           trigger: heroRef.current,
           start: "bottom bottom",
