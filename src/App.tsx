@@ -169,7 +169,7 @@ function App() {
     // Background text animation
     if (backgroundTextRef.current) {
       gsap.to(backgroundTextRef.current, {
-        y: -300,
+        y: -400,
         opacity: 1,
         scaleY: 1,
         scrollTrigger: {
