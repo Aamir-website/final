@@ -82,3 +82,4 @@ export function VideoThumbnail({
     </div>
   );
 }
+export default VideoThumbnail;
