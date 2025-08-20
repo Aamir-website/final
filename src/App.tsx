@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import VideoThumbnail from "./components/VideoThumbnail";
 import { Mail, Instagram, Linkedin } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
