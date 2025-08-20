@@ -171,12 +171,12 @@ function App() {
       gsap.to(backgroundTextRef.current, {
         y: -200,
         opacity: 1,
-        scaleY: 2,
+        scaleY: 1,
         scrollTrigger: {
           trigger: heroRef.current,
           start: "bottom bottom",
           end: "bottom+=-50 top",
-          scrub: 0,
+          scrub: 1,
           ease: "power2.out",
         }
       });
