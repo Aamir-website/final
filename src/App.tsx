@@ -545,6 +545,7 @@ function App() {
       <LazyVideo
         key={i}
         src={url}
+        poster="/me.png" 
         title={`SOCIAL ${String(i + 1).padStart(2, "0")}`}
         aspectRatio="vertical"
       />
