@@ -176,7 +176,6 @@ function App() {
           trigger: heroRef.current,
           start: "bottom bottom",
           end: "bottom+=-50 top",
-          scrub: 1,
           ease: "power2.out",
         }
       });
