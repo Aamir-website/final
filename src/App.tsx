@@ -139,7 +139,6 @@ function App() {
     heroElements.forEach(element => {
       if (element) {
         heroTl.to(element, { y: 80 }, 0);
-         scrub: 5
       }
     });
 
