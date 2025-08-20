@@ -1,626 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import { Star, Maximize2, X } from 'lucide-react';
+import { Mail, Instagram, Linkedin } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplashScreen } from './components/SplashScreen';
-import { RandomLines } from './components/RandomLines';
-import { Mail, Instagram, Linkedin } from 'lucide-react';
+import { LazyVideo } from './components/LazyVideo';
+import { useThrottledMouseTracking } from './hooks/useThrottledMouseTracking';
 
 // Register ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
-
-interface VideoPlayerProps {
-  src?: string;
-  title: string;
-  isShowreel?: boolean;
-}
-
-function VideoPlayer({ src, title, isShowreel = false }: VideoPlayerProps) {
-  const [isFullscreen, setIsFullscreen] = React.useState(false);
-  const [isPlaying, setIsPlaying] = React.useState(false);
-  const [showThumbnail, setShowThumbnail] = React.useState(true);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-
-  const handleVideoClick = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-        setIsPlaying(false); 
-        setShowThumbnail(true);
-      } else {
-        videoRef.current.play();
-        setIsPlaying(true);
-        setShowThumbnail(false);
-      }
-    }
-  };
-
-  const toggleFullscreen = () => {
-    if (!isFullscreen) {
-      if (containerRef.current?.requestFullscreen) {
-        containerRef.current.requestFullscreen();
-      }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
-    }
-  };
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
-
-  if (src) {
-    return (
-      <div 
-        ref={containerRef}
-        className={`relative group cursor-pointer aspect-video rounded-xl overflow-hidden shadow-lg transition-all duration-300 ${
-          isFullscreen 
-            ? 'fixed inset-0 z-[9999] !rounded-none !aspect-auto w-screen h-screen' 
-            : 'hover:shadow-xl hover:scale-105'
-        }`}
-        onClick={handleVideoClick}
-      >
-        <video
-          ref={videoRef}
-          src={src}
-          autoPlay={false}
-          muted={false}
-          loop
-          playsInline
-          className={`w-full h-full object-contain transition-opacity duration-300 ${showThumbnail ? 'opacity-0' : 'opacity-100'} ${
-            isFullscreen ? 'object-contain' : 'object-cover'
-          }`}
-          onLoadedData={() => {
-            if (videoRef.current) {
-              videoRef.current.currentTime = 1; // Set thumbnail to 1 second
-            }
-          }}
-        />
-        
-        {/* Thumbnail overlay */}
-        {showThumbnail && (
-          <div className="absolute inset-0">
-            <canvas
-              ref={(canvas) => {
-                if (canvas && videoRef.current) {
-                  const video = videoRef.current;
-                  const ctx = canvas.getContext('2d');
-                  if (ctx) {
-                    canvas.width = video.videoWidth || 1920;
-                    canvas.height = video.videoHeight || 1080;
-                    
-                    const drawThumbnail = () => {
-                      if (video.readyState >= 2) {
-                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                      }
-                    };
-                    
-                    video.addEventListener('loadeddata', drawThumbnail);
-                    video.addEventListener('seeked', drawThumbnail);
-                    
-                    if (video.readyState >= 1) {
-                      drawThumbnail();
-                    }
-                  }
-                }
-              }}
-              className={`w-full h-full ${isFullscreen ? 'object-contain' : 'object-cover'}`}
-            />
-          </div>
-        )}
-        
-        {!isPlaying && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-            <div className={`bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm ${
-              isFullscreen ? 'w-24 h-24' : 'w-16 h-16'
-            }`}>
-              <div className={`w-0 h-0 border-l-white border-t-transparent border-b-transparent ml-1 ${
-                isFullscreen 
-                  ? 'border-l-[30px] border-t-[18px] border-b-[18px]' 
-                  : 'border-l-[20px] border-t-[12px] border-b-[12px] animate-bounce-triangle'
-              }`}></div>
-            </div>
-          </div>
-        )}
-        {!isFullscreen && (
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
-        )}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleFullscreen();
-          }}
-          className={`absolute bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center transition-all duration-300 z-10 ${
-            isFullscreen 
-              ? 'top-8 right-8 w-12 h-12 opacity-100' 
-              : 'top-4 right-4 w-10 h-10 opacity-0 group-hover:opacity-100'
-          }`}
-        >
-          {isFullscreen ? (
-            <X size={20} className="text-white" />
-          ) : (
-            <Maximize2 size={16} className="text-white" />
-          )}
-        </button>
-        <div className={`absolute transition-all duration-300 ${
-          isFullscreen 
-            ? 'bottom-8 left-8 opacity-100' 
-            : 'bottom-4 left-4 opacity-0 group-hover:opacity-100'
-        }`}>
-          <span className={`text-white font-bosenAlt bg-black/50 px-3 py-1 rounded-full ${
-            isFullscreen ? 'text-lg' : 'text-sm'
-          }`}>
-            {title}
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-
-  // Placeholder for videos without src
-  return (
-    <div 
-      ref={containerRef}
-      className={`relative group cursor-pointer aspect-video rounded-xl overflow-hidden shadow-lg transition-all duration-300 ${
-        isFullscreen 
-          ? 'fixed inset-0 z-[9999] !rounded-none !aspect-auto w-screen h-screen' 
-          : 'hover:shadow-xl hover:scale-105'
-      }`}
-      onClick={handleVideoClick}
-    >
-      <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className={`mx-auto mb-3 bg-white/10 rounded-full flex items-center justify-center ${
-            isFullscreen ? 'w-24 h-24' : 'w-12 h-12'
-          }`}>
-            <div className={`w-0 h-0 border-l-white border-t-transparent border-b-transparent ml-1 ${
-              isFullscreen 
-                ? 'border-l-[20px] border-t-[12px] border-b-[12px]' 
-                : 'border-l-[10px] border-t-[6px] border-b-[6px]'
-            }`}></div>
-          </div>
-          <span className={`text-white/60 font-bosenAlt ${isFullscreen ? 'text-xl' : 'text-sm'}`}>{title}</span>
-        </div>
-      </div>
-      {!isFullscreen && (
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"></div>
-      )}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleFullscreen();
-        }}
-        className={`absolute bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center transition-all duration-300 z-10 ${
-          isFullscreen 
-            ? 'top-8 right-8 w-12 h-12 opacity-100' 
-            : 'top-4 right-4 w-10 h-10 opacity-0 group-hover:opacity-100'
-        }`}
-      >
-        {isFullscreen ? (
-          <X size={20} className="text-white" />
-        ) : (
-          <Maximize2 size={16} className="text-white" />
-        )}
-      </button>
-    </div>
-  );
-}
-
-function VerticalVideoPlayer({ title }: { title: string }) {
-  const [isFullscreen, setIsFullscreen] = React.useState(false); 
-  const [isPlaying, setIsPlaying] = React.useState(false);
-  const [showThumbnail, setShowThumbnail] = React.useState(true);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleVideoClick = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-        setIsPlaying(false);
-        setShowThumbnail(true);
-      } else {
-        videoRef.current.play();
-        setIsPlaying(true);
-        setShowThumbnail(false);
-      }
-    }
-  };
-
-  const toggleFullscreen = () => {
-    if (!isFullscreen) {
-      if (containerRef.current?.requestFullscreen) {
-        containerRef.current.requestFullscreen();
-      }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
-    }
-  };
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
-
-  return (
-    <div 
-      ref={containerRef}
-      className={`relative group cursor-pointer aspect-[9/16] rounded-lg overflow-hidden shadow-lg transition-all duration-300 ${
-        isFullscreen 
-          ? 'fixed inset-0 z-[9999] !rounded-none !aspect-auto w-screen h-screen' 
-          : 'hover:shadow-xl hover:scale-105'
-      }`}
-      onClick={handleVideoClick}
-    >
-      {/* Video element (hidden initially) */}
-      <video
-        ref={videoRef}
-        autoPlay={false}
-        muted={false}
-        loop
-        playsInline
-        className={`w-full h-full transition-opacity duration-300 ${showThumbnail ? 'opacity-0' : 'opacity-100'} ${
-          isFullscreen ? 'object-contain' : 'object-cover'
-        }`}
-        onLoadedData={() => {
-          if (videoRef.current) {
-            videoRef.current.currentTime = 1; // Set thumbnail to 1 second
-          }
-        }}
-      />
-      
-      {/* Thumbnail overlay */}
-      {showThumbnail && (
-        <div className="absolute inset-0">
-          <canvas
-            ref={(canvas) => {
-              if (canvas && videoRef.current) {
-                const video = videoRef.current;
-                const ctx = canvas.getContext('2d');
-                if (ctx) {
-                  canvas.width = video.videoWidth || 1080;
-                  canvas.height = video.videoHeight || 1920;
-                  
-                  const drawThumbnail = () => {
-                    if (video.readyState >= 2) {
-                      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    }
-                  };
-                  
-                  video.addEventListener('loadeddata', drawThumbnail);
-                  video.addEventListener('seeked', drawThumbnail);
-                  
-                  if (video.readyState >= 2) {
-                    drawThumbnail();
-                  } 
-                }
-              }
-            }}
-            className={`w-full h-full ${isFullscreen ? 'object-contain' : 'object-cover'}`}
-          />
-        </div>
-      )}
-      
-      {/* Fallback placeholder when no video */}
-      {!videoRef.current?.src && (
-        <div className="w-full h-full bg-gradient-to-b from-gray-700 to-gray-900 flex items-center justify-center">
-          <div className="text-center">
-            <div className={`mx-auto mb-2 bg-white/10 rounded-full flex items-center justify-center ${
-              isFullscreen ? 'w-16 h-16' : 'w-8 h-8'
-            }`}>
-              <div className={`w-0 h-0 border-l-white border-t-transparent border-b-transparent ml-0.5 ${
-                isFullscreen 
-                  ? 'border-l-[16px] border-t-[8px] border-b-[8px]' 
-                  : 'border-l-[8px] border-t-[4px] border-b-[4px]'
-              }`}></div>
-            </div>
-            <span className={`text-white/60 font-bosenAlt ${isFullscreen ? 'text-lg' : 'text-xs'}`}>{title}</span>
-          </div>
-        </div>
-      )}
-      
-      {/* Play button overlay */}
-      {!isPlaying && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/30 ">
-          <div className={`bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm ${
-            isFullscreen ? 'w-20 h-20' : 'w-12 h-12'
-          }`}>
-            <div className={`w-0 h-0 border-l-white border-t-transparent border-b-transparent ml-0.5 ${
-              isFullscreen 
-                ? 'border-l-[24px] border-t-[14px] border-b-[14px]' 
-                : 'border-l-[12px] border-t-[8px] border-b-[8px] animate-bounce-triangle'
-            }`}></div>
-          </div>
-        </div>
-      )}
-      
-      {!isFullscreen && (
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"></div>
-      )}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleFullscreen();
-        }}
-        className={`absolute bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center transition-all duration-300 z-10 ${
-          isFullscreen 
-            ? 'top-8 right-8 w-12 h-12 opacity-100' 
-            : 'top-2 right-2 w-8 h-8 opacity-0 group-hover:opacity-100'
-        }`}
-      >
-        {isFullscreen ? (
-          <X size={20} className="text-white" />
-        ) : (
-          <Maximize2 size={12} className="text-white" />
-        )}
-      </button>
-      <div className={`absolute transition-all duration-300 ${
-        isFullscreen 
-          ? 'bottom-8 left-8 opacity-100' 
-          : 'bottom-2 left-2 opacity-0 group-hover:opacity-100'
-      }`}>
-        <span className={`text-white font-bosenAlt bg-black/50 px-2 py-1 rounded-full ${
-          isFullscreen ? 'text-base' : 'text-xs'
-        }`}>
-          {title}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function VerticalVideoPlayerWithSrc({ src, title }: { src: string; title: string }) {
-  const [isFullscreen, setIsFullscreen] = React.useState(false); 
-  const [isPlaying, setIsPlaying] = React.useState(false);
-  const [showThumbnail, setShowThumbnail] = React.useState(true);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleVideoClick = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-        setIsPlaying(false);
-        setShowThumbnail(true);
-      } else {
-        videoRef.current.play();
-        setIsPlaying(true);
-        setShowThumbnail(false);
-      }
-    }
-  };
-
-  const toggleFullscreen = () => {
-    if (!isFullscreen) {
-      if (containerRef.current?.requestFullscreen) {
-        containerRef.current.requestFullscreen();
-      }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
-    }
-  };
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
-
-  return (
-    <div 
-      ref={containerRef}
-      className={`relative group cursor-pointer aspect-[9/16] rounded-lg overflow-hidden shadow-lg transition-all duration-300 ${
-        isFullscreen 
-          ? 'fixed inset-0 z-[9999] !rounded-none !aspect-auto w-screen h-screen' 
-          : 'hover:shadow-xl hover:scale-105'
-      }`}
-      onClick={handleVideoClick}
-    >
-      <video
-        ref={videoRef}
-        src={src}
-        autoPlay={false}
-        muted={false}
-        loop
-        playsInline
-        className={`w-full h-full transition-opacity duration-300 ${showThumbnail ? 'opacity-0' : 'opacity-100'} ${
-          isFullscreen ? 'object-contain' : 'object-cover'
-        }`}
-        onLoadedData={() => {
-          if (videoRef.current) {
-            videoRef.current.currentTime = 1; // Set thumbnail to 1 second
-          }
-        }}
-      />
-      
-      {/* Thumbnail overlay */}
-      {showThumbnail && (
-        <div className="absolute inset-0">
-          <canvas
-            ref={(canvas) => {
-              if (canvas && videoRef.current) {
-                const video = videoRef.current;
-                const ctx = canvas.getContext('2d');
-                if (ctx) {
-                  canvas.width = video.videoWidth || 1080;
-                  canvas.height = video.videoHeight || 1920;
-                  
-                  const drawThumbnail = () => {
-                    if (video.readyState >= 2) {
-                      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    }
-                  };
-                  
-                  video.addEventListener('loadeddata', drawThumbnail);
-                  video.addEventListener('seeked', drawThumbnail);
-                  
-                  if (video.readyState >= 2) {
-                    drawThumbnail();
-                  }
-                }
-              }
-            }}
-            className={`w-full h-full ${isFullscreen ? 'object-contain' : 'object-cover'}`}
-          />
-        </div>
-      )}
-      
-      {/* Play button overlay */}
-      {!isPlaying && ( 
-        <div className="absolute inset-0 flex items-center justify-center bg-black/30 ">
-          <div className={`bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm ${
-            isFullscreen ? 'w-20 h-20' : 'w-12 h-12'
-          }`}>
-            <div className={`w-0 h-0 border-l-white border-t-transparent border-b-transparent ml-0.5 ${
-              isFullscreen 
-                ? 'border-l-[24px] border-t-[14px] border-b-[14px]' 
-                : 'border-l-[12px] border-t-[8px] border-b-[8px] animate-bounce-triangle'
-            }`}></div>
-          </div>
-          </div>
-      
-      )}
-      
-      {!isFullscreen && (
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"></div>
-      )}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleFullscreen();
-        }}
-        className={`absolute bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center transition-all duration-300 z-10 ${
-          isFullscreen 
-            ? 'top-8 right-8 w-12 h-12 opacity-100' 
-            : 'top-2 right-2 w-8 h-8 opacity-0 group-hover:opacity-100'
-        }`}
-      >
-        {isFullscreen ? (
-          <X size={20} className="text-white" />
-        ) : (
-          <Maximize2 size={12} className="text-white" />
-        )}
-      </button>
-      <div className={`absolute transition-all duration-300 ${
-        isFullscreen 
-          ? 'bottom-8 left-8 opacity-100' 
-          : 'bottom-2 left-2 opacity-0 group-hover:opacity-100'
-      }`}>
-        <span className={`text-white font-bosenAlt bg-black/50 px-2 py-1 rounded-full ${
-          isFullscreen ? 'text-base' : 'text-xs'
-        }`}>
-          {title}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function VerticalVideoPlayerPlaceholder({ title }: { title: string }) {
-  const [isFullscreen, setIsFullscreen] = React.useState(false); 
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const toggleFullscreen = () => {
-    if (!isFullscreen) {
-      if (containerRef.current?.requestFullscreen) {
-        containerRef.current.requestFullscreen();
-      }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
-    }
-  };
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
-
-  return (
-    <div 
-      ref={containerRef}
-      className={`relative group cursor-pointer aspect-[9/16] rounded-lg overflow-hidden shadow-lg transition-all duration-300 ${
-        isFullscreen 
-          ? 'fixed inset-0 z-[9999] !rounded-none !aspect-auto w-screen h-screen' 
-          : 'hover:shadow-xl hover:scale-105'
-      }`}
-    >
-      <div className="w-full h-full bg-gradient-to-b from-gray-700 to-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className={`mx-auto mb-2 bg-white/10 rounded-full flex items-center justify-center ${
-            isFullscreen ? 'w-16 h-16' : 'w-8 h-8'
-          }`}>
-            <div className={`w-0 h-0 border-l-white border-t-transparent border-b-transparent ml-0.5 ${
-              isFullscreen 
-                ? 'border-l-[16px] border-t-[8px] border-b-[8px]' 
-                : 'border-l-[8px] border-t-[4px] border-b-[4px]'
-            }`}></div>
-          </div>
-          <span className={`text-white/60 font-bosenAlt ${isFullscreen ? 'text-lg' : 'text-xs'}`}>{title}</span>
-        </div>
-      </div>
-      {!isFullscreen && (
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"></div>
-      )}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleFullscreen();
-        }}
-        className={`absolute bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center transition-all duration-300 z-10 ${
-          isFullscreen 
-            ? 'top-8 right-8 w-12 h-12 opacity-100' 
-            : 'top-2 right-2 w-8 h-8 opacity-0 group-hover:opacity-100'
-        }`}
-      >
-        {isFullscreen ? (
-          <X size={20} className="text-white" />
-        ) : (
-          <Maximize2 size={12} className="text-white" />
-        )}
-      </button>
-      <div className={`absolute transition-all duration-300 ${
-        isFullscreen 
-          ? 'bottom-8 left-8 opacity-100' 
-          : 'bottom-2 left-2 opacity-0 group-hover:opacity-100'
-      }`}>
-        <span className={`text-white font-bosenAlt bg-black/50 px-2 py-1 rounded-full ${
-          isFullscreen ? 'text-base' : 'text-xs'
-        }`}>
-          {title}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-
 
 interface TestimonialBadge {
   image: string;
@@ -722,174 +109,132 @@ function App() {
   const triangleRef = useRef<HTMLDivElement>(null);
   const fixedBackgroundRef = useRef<HTMLDivElement>(null); 
   const portfolioRef = useRef<HTMLDivElement>(null);
-// Mouse tracking state
-const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 });
-const [isCursorInsideHero, setIsCursorInsideHero] = React.useState(false);
-const [isMouseTrackingEnabled, setIsMouseTrackingEnabled] = React.useState(true);
+
+  // Use throttled mouse tracking hook
+  const { mousePosition, handleMouseEnter, handleMouseLeave } = useThrottledMouseTracking();
 
   // Handle splash screen completion
   const handleLoadComplete = () => {
     setIsLoading(false);
   };
 
-// Track if cursor enters/leaves hero section
-useEffect(() => {
-  const heroElement = heroRef.current;
-  if (!heroElement) return;
+  useEffect(() => {
+    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+    gsap.registerPlugin(ScrollTrigger);
 
-  const handleMouseEnter = () => setIsCursorInsideHero(true);
-  const handleMouseLeave = () => {
-    setIsCursorInsideHero(false);
-    setMousePosition({ x: 0, y: 0 }); // Optional reset
-  };
-
-  heroElement.addEventListener("mouseenter", handleMouseEnter);
-  heroElement.addEventListener("mouseleave", handleMouseLeave);
-
-  return () => {
-    heroElement.removeEventListener("mouseenter", handleMouseEnter);
-    heroElement.removeEventListener("mouseleave", handleMouseLeave);
-  };
-}, [heroRef]);
-
-// Mouse tracking effect
-useEffect(() => {
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isCursorInsideHero || !isMouseTrackingEnabled) return;
-
-    const x = (e.clientX / window.innerWidth - 0.5) * 1.5;
-    const y = (e.clientY / window.innerHeight - 0.5) * 0.7;
-    setMousePosition({ x, y });
-  };
-
-  window.addEventListener("mousemove", handleMouseMove);
-  return () => window.removeEventListener("mousemove", handleMouseMove);
-}, [isCursorInsideHero, isMouseTrackingEnabled]);
-
- useEffect(() => {
-  ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-  gsap.registerPlugin(ScrollTrigger);
-
-  // Batch hero elements animation with GPU acceleration
- const heroElements = [portraitRef.current, baseRef.current, eyesRef.current];
-  heroElements.forEach(element => {
-    if (element) {
-      gsap.set(element, { y: 0 });  // Reset y position
-      gsap.to(element, {
-        y: 30,  // Chhota movement
-        scrollTrigger: {
-          trigger: portfolioSectionRef.current,
-          start: "top bottom",
-          end: "top 70%",
-          scrub: 2,
-          invalidateOnRefresh: false,
-        }
-      });
-    }
-  });
-
- 
-    gsap.to(mainTextRef.current, {
-  y: 700, // ya 200 if you want smaller slide
-  scrollTrigger: {
-    trigger: heroRef.current,
-    start: "top top",
-    end: "top+=1000", // 🔁 reduce to make it slower & smoother
-    scrub: 2        // 🔁 increase for smoother animation
-  }
-});
-
-
-  if (triangleRef.current) {
-    gsap.set(triangleRef.current, { y: 0 });
-    gsap.to(triangleRef.current, {
-      y: 100,
-      scrollTrigger: {
-        trigger: heroRef.current,
-        start: "top top",
-        end: "bottom+=1000 center",
-        scrub: 1,
-        invalidateOnRefresh: false,
-      }
-    });
-  }
-
-  if (backgroundTextRef.current) {
-    gsap.set(backgroundTextRef.current, { y: 0 });
-    gsap.to(backgroundTextRef.current, {
-      y: -300,
-      opacity: 1,
-      scaleY: 2.5,
-      scrollTrigger: {
-        trigger: heroRef.current,
-        start: "bottom bottom",
-        end: "bottom+=-50 top",
-        scrub: 1,
-        ease: "power2.out",
-        invalidateOnRefresh: false,
-      }
-    });
-  }
-
-  if (portfolioSectionRef.current) {
-    gsap.set(portfolioSectionRef.current, { y: 0 });
-    gsap.to(portfolioSectionRef.current, {
-      y: -900,
+    // Create a single timeline for all hero elements
+    const heroTl = gsap.timeline({
       scrollTrigger: {
         trigger: portfolioSectionRef.current,
         start: "top bottom",
-        end: "bottom top",
+        end: "top 70%",
         scrub: 2,
         invalidateOnRefresh: false,
       }
     });
-  }
 
-  // Visibility triggers (unchanged)
-  ScrollTrigger.create({
-    trigger: portfolioSectionRef.current,
-    start: "center top",
-    fastScrollEnd: true,
-    onEnter: () => setShowTestimonials(false),
-    onLeaveBack: () => setShowTestimonials(true),
-  });
+    // Batch hero elements animation
+    const heroElements = [portraitRef.current, baseRef.current, eyesRef.current];
+    heroElements.forEach(element => {
+      if (element) {
+        heroTl.to(element, { y: 30 }, 0);
+      }
+    });
 
-  ScrollTrigger.create({
-    trigger: portfolioSectionRef.current,
-    start: "center bottom",
-    fastScrollEnd: true,
-    onEnter: () => setShowContact(true),
-    onLeaveBack: () => setShowContact(false),
-  });
+    // Main text animation
+    gsap.to(mainTextRef.current, {
+      y: 700,
+      scrollTrigger: {
+        trigger: heroRef.current,
+        start: "top top",
+        end: "top+=1000",
+        scrub: 2
+      }
+    });
 
-  ScrollTrigger.create({
-    trigger: portfolioSectionRef.current,
-    start: "center bottom",
-     fastScrollEnd: true,
-    onEnter: () => setShowbase(false),
-    onLeaveBack: () => setShowbase(true),
-  });
+    // Triangle animation
+    if (triangleRef.current) {
+      gsap.to(triangleRef.current, {
+        y: 100,
+        scrollTrigger: {
+          trigger: heroRef.current,
+          start: "top top",
+          end: "bottom+=1000 center",
+          scrub: 1,
+        }
+      });
+    }
 
-  ScrollTrigger.create({
-    trigger: portfolioSectionRef.current,
-    start: "center 10%",
-     fastScrollEnd: true,
-    onEnter: () => setShowportrait(false),
-    onLeaveBack: () => setShowportrait(true),
-  });
+    // Background text animation
+    if (backgroundTextRef.current) {
+      gsap.to(backgroundTextRef.current, {
+        y: -300,
+        opacity: 1,
+        scaleY: 2.5,
+        scrollTrigger: {
+          trigger: heroRef.current,
+          start: "bottom bottom",
+          end: "bottom+=-50 top",
+          scrub: 1,
+          ease: "power2.out",
+        }
+      });
+    }
 
-  ScrollTrigger.create({
-    trigger: portfolioSectionRef.current,
-    start: "center bottom",
-     fastScrollEnd: true,
-    onEnter: () => setShoweyes(false),
-    onLeaveBack: () => setShoweyes(true),
-  });
+    // Portfolio section animation
+    if (portfolioSectionRef.current) {
+      gsap.to(portfolioSectionRef.current, {
+        y: -900,
+        scrollTrigger: {
+          trigger: portfolioSectionRef.current,
+          start: "top bottom",
+          end: "bottom top",
+          scrub: 2,
+        }
+      });
+    }
 
-  return () => {
-    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-  };
-}, []);
+    // Visibility triggers
+    const visibilityTriggers = [
+      {
+        start: "center top",
+        onEnter: () => setShowTestimonials(false),
+        onLeaveBack: () => setShowTestimonials(true),
+      },
+      {
+        start: "center bottom",
+        onEnter: () => {
+          setShowContact(true);
+          setShowbase(false);
+          setShoweyes(false);
+        },
+        onLeaveBack: () => {
+          setShowContact(false);
+          setShowbase(true);
+          setShoweyes(true);
+        },
+      },
+      {
+        start: "center 10%",
+        onEnter: () => setShowportrait(false),
+        onLeaveBack: () => setShowportrait(true),
+      }
+    ];
+
+    visibilityTriggers.forEach(trigger => {
+      ScrollTrigger.create({
+        trigger: portfolioSectionRef.current,
+        start: trigger.start,
+        fastScrollEnd: true,
+        onEnter: trigger.onEnter,
+        onLeaveBack: trigger.onLeaveBack,
+      });
+    });
+
+    return () => {
+      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+    };
+  }, []);
  
   return ( 
     <div className="relative">
@@ -917,6 +262,8 @@ useEffect(() => {
       <div 
         ref={heroRef}
         className="relative min-h-screen w-full overflow-hidden bg-transparent"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
 
          {/* Base */}
@@ -1120,17 +467,10 @@ useEffect(() => {
       {/* Portfolio Section */}
       <div 
         ref={portfolioSectionRef} 
-        className="relative min-h-screen w-full bg-white z-[100] rounded-t-[3rem] rounded-b-[3rem] texture-overlay opacity-100"
+        className="relative min-h-screen w-full bg-white z-[100] rounded-t-[3rem] rounded-b-[3rem] opacity-100"
         style={{ zIndex: 9999 }}
       >
 
-        
-        {/* Random Lines Overlay */}
-        <RandomLines count={25} className="z-20" />
-        
-        {/* Additional texture layer */}
-        <div className="absolute inset-0 texture-overlay-light opacity-30 z-20" />
-        
         <div className="container mx-auto px-6 py-20">
           <div className="relative text-center mb-16 z-20">
             <h2 className="text-5xl md:text-7xl lg:text-8xl font-bosenAlt text-black/90 mb-6 tracking-tight">
@@ -1147,7 +487,7 @@ useEffect(() => {
               SHOW REEL
             </h3>
             <div className="max-w-4xl mx-auto">
-              <VideoPlayer 
+              <LazyVideo 
                 src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
                 title="SHOW REEL"
                 isShowreel={true}
@@ -1172,12 +512,11 @@ useEffect(() => {
       "https://ia600904.us.archive.org/35/items/portfolio_202508/Young%20Actresses%20Who%20Tragically%20Passed%20Away.mp4",
       "https://ia601002.us.archive.org/33/items/sample-1-1/sample1%20%281%29.mp4",
     ].map((url, i) => (
-      <VideoPlayer
+      <LazyVideo
         key={i}
         src={url}
         title={`PROJECT ${String(i + 1).padStart(2, "0")}`}
         isShowreel={false}
-        autoPlay={false}
       />
     ))}
   </div>
@@ -1203,11 +542,11 @@ useEffect(() => {
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4",
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
     ].map((url, i) => (
-      <VerticalVideoPlayerWithSrc
+      <LazyVideo
         key={i}
         src={url}
         title={`SOCIAL ${String(i + 1).padStart(2, "0")}`}
-        autoPlay={false}
+        aspectRatio="vertical"
       />
     ))}
   </div> 
