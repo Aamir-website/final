@@ -137,7 +137,7 @@ function App() {
     const heroElements = [portraitRef.current, baseRef.current, eyesRef.current];
     heroElements.forEach(element => {
       if (element) {
-        heroTl.to(element, { y: 30 }, 0);
+        heroTl.to(element, { y: 80 }, 0);
       }
     });
 
@@ -148,7 +148,7 @@ function App() {
         trigger: heroRef.current,
         start: "top top",
         end: "top+=1000",
-        scrub: 2
+        scrub: 1
       }
     });
 
@@ -170,7 +170,7 @@ function App() {
       gsap.to(backgroundTextRef.current, {
         y: -300,
         opacity: 1,
-        scaleY: 2.5,
+        scaleY: 1,
         scrollTrigger: {
           trigger: heroRef.current,
           start: "bottom bottom",
@@ -189,7 +189,7 @@ function App() {
           trigger: portfolioSectionRef.current,
           start: "top bottom",
           end: "bottom top",
-          scrub: 2,
+          scrub: 1,
         }
       });
     }
