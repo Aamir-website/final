@@ -4,8 +4,8 @@ import { Mail, Instagram, Linkedin } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplashScreen } from './components/SplashScreen';
-import { LazyVideo } from './components/LazyVideo';
 import { useThrottledMouseTracking } from './hooks/useThrottledMouseTracking';
+import { useVideoPreloader } from './hooks/useVideoPreloader';
 import { MobileBadgeCarousel } from './components/MobileBadgeCarousel';
 
 // Register ScrollTrigger plugin
@@ -96,6 +96,32 @@ function TestimonialBadge({ badge }: { badge: TestimonialBadge }) {
 
 
 
+// All video sources for preloading
+const allVideoSources = [
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+  "https://ia600904.us.archive.org/35/items/portfolio_202508/Outworking%20everyone%20isn%E2%80%99t%20that%20hard%20v1.mp4",
+  "https://ia600904.us.archive.org/35/items/portfolio_202508/What%20is%20the%20most%20normal%20episode%20of%20Family%20Guy%20v3.mp4",
+  "https://ia600904.us.archive.org/35/items/portfolio_202508/Never%20running%20out%20of%20things%20to%20say%20is%20easy%2C%20actually%20isn%27t%C2%A0that%C2%A0hard%20v1.mp4",
+  "https://ia600904.us.archive.org/35/items/portfolio_202508/sample1_V1.mp4",
+  "https://ia600904.us.archive.org/35/items/portfolio_202508/The%20entire%20history%20of%20Thomas%20Shelby%20v2_1.mp4",
+  "https://ia600904.us.archive.org/35/items/portfolio_202508/WOLF%27S%20LAIR%20WHAT%20AI%20FOUND%20IN%20THIS%20HIDDEN%20NAZI%20BUNKER%20FROM%20WORLD%20WAR%20II%20IS%20TERRIFYING.mp4",
+  "https://ia800906.us.archive.org/16/items/flirting-with-women-isnt-that-hard-v-1/Flirting%20with%20women%20isn%27t%20that%20hard%20v1.mp4",
+  "https://ia600904.us.archive.org/35/items/portfolio_202508/Young%20Actresses%20Who%20Tragically%20Passed%20Away.mp4",
+  "https://ia601002.us.archive.org/33/items/sample-1-1/sample1%20%281%29.mp4",
+  "https://ia801704.us.archive.org/11/items/inkuuuu/inkuuuu.mp4",
+  "https://ia600902.us.archive.org/33/items/part-1-shorts/Inklwell%20media%20reel%201%20v3.mp4",
+  "https://ia801002.us.archive.org/18/items/shorts-2-part/Mj%20real_2.mp4",
+  "https://ia801007.us.archive.org/2/items/inkwell-media-video-1-v-2/inkwell%20media%20video%201%20v2.mp4",
+  "https://ia800902.us.archive.org/33/items/part-1-shorts/Inkwell%20media%20v2%20FINAL.mp4",
+  "https://ia600902.us.archive.org/33/items/part-1-shorts/Inkwell%20Media%20ki%20videooo.mp4",
+  "https://ia801002.us.archive.org/18/items/shorts-2-part/mj%20realtyyyyy2.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
+];
+
 function App() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [showTestimonials, setShowTestimonials] = React.useState(true);
@@ -116,6 +142,14 @@ function App() {
 
   // Use throttled mouse tracking hook
   const { mousePosition, handleMouseEnter, handleMouseLeave } = useThrottledMouseTracking(!isMobile());
+
+  // Use video preloader hook
+  const { preloadVideo, getVideoElement, isVideoLoaded } = useVideoPreloader(allVideoSources);
+
+  // Handle video coming into view
+  const handleVideoInView = (src: string) => {
+    preloadVideo(src);
+  };
 
   // Handle splash screen completion
   const handleLoadComplete = () => {
@@ -502,9 +536,11 @@ gsap.to(backgroundTextRef.current, {
             </h3>
             <div className="max-w-4xl mx-auto">
               <VideoThumbnail
-                src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+                src={allVideoSources[0]}
                 title="SHOW REEL"
                 isShowreel={true}
+                preloadedVideo={getVideoElement(allVideoSources[0])}
+                onVideoInView={handleVideoInView}
               />
             </div>
           </div>
@@ -515,22 +551,14 @@ gsap.to(backgroundTextRef.current, {
     FEATURED WORK
   </h3>
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-    {[
-      "https://ia600904.us.archive.org/35/items/portfolio_202508/Outworking%20everyone%20isn%E2%80%99t%20that%20hard%20v1.mp4",
-      "https://ia600904.us.archive.org/35/items/portfolio_202508/What%20is%20the%20most%20normal%20episode%20of%20Family%20Guy%20v3.mp4",
-"https://ia600904.us.archive.org/35/items/portfolio_202508/Never%20running%20out%20of%20things%20to%20say%20is%20easy%2C%20actually%20isn%27t%C2%A0that%C2%A0hard%20v1.mp4",
-      "https://ia600904.us.archive.org/35/items/portfolio_202508/sample1_V1.mp4",
-      "https://ia600904.us.archive.org/35/items/portfolio_202508/The%20entire%20history%20of%20Thomas%20Shelby%20v2_1.mp4",
-      "https://ia600904.us.archive.org/35/items/portfolio_202508/WOLF%27S%20LAIR%20WHAT%20AI%20FOUND%20IN%20THIS%20HIDDEN%20NAZI%20BUNKER%20FROM%20WORLD%20WAR%20II%20IS%20TERRIFYING.mp4",
-      "https://ia800906.us.archive.org/16/items/flirting-with-women-isnt-that-hard-v-1/Flirting%20with%20women%20isn%27t%20that%20hard%20v1.mp4",
-      "https://ia600904.us.archive.org/35/items/portfolio_202508/Young%20Actresses%20Who%20Tragically%20Passed%20Away.mp4",
-      "https://ia601002.us.archive.org/33/items/sample-1-1/sample1%20%281%29.mp4",
-    ].map((url, i) => (
+    {allVideoSources.slice(1, 10).map((url, i) => (
       <VideoThumbnail
         key={i}
         src={url}
         title={`PROJECT ${String(i + 1).padStart(2, "0")}`}
         isShowreel={false}
+        preloadedVideo={getVideoElement(url)}
+        onVideoInView={handleVideoInView}
       />
     ))}
   </div>
@@ -542,25 +570,14 @@ gsap.to(backgroundTextRef.current, {
     SOCIAL CONTENT
   </h3>
   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-w-5xl mx-auto">
-    {[
-      "https://ia801704.us.archive.org/11/items/inkuuuu/inkuuuu.mp4",
-      "https://ia600902.us.archive.org/33/items/part-1-shorts/Inklwell%20media%20reel%201%20v3.mp4",
-      "https://ia801002.us.archive.org/18/items/shorts-2-part/Mj%20real_2.mp4",
-      "https://ia801007.us.archive.org/2/items/inkwell-media-video-1-v-2/inkwell%20media%20video%201%20v2.mp4",
-      "https://ia800902.us.archive.org/33/items/part-1-shorts/Inkwell%20media%20v2%20FINAL.mp4",
-      "https://ia600902.us.archive.org/33/items/part-1-shorts/Inkwell%20Media%20ki%20videooo.mp4",
-      "https://ia801002.us.archive.org/18/items/shorts-2-part/mj%20realtyyyyy2.mp4",
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4",
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4",
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
-    ].map((url, i) => (
+    {allVideoSources.slice(10).map((url, i) => (
       <VideoThumbnail
         key={i}
         src={url}
         title={`SOCIAL ${String(i + 1).padStart(2, "0")}`}
         aspectRatio="vertical"
+        preloadedVideo={getVideoElement(url)}
+        onVideoInView={handleVideoInView}
       />
     ))}
   </div> 
