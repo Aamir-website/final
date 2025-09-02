@@ -10,6 +10,8 @@ interface VideoThumbnailProps {
   aspectRatio?: "video" | "vertical";
   className?: string;
   isShowreel?: boolean;
+  preloadedVideo?: HTMLVideoElement | null;
+  onVideoInView?: (src: string) => void;
 }
 
 export function VideoThumbnail({
@@ -18,19 +20,21 @@ export function VideoThumbnail({
   aspectRatio = "video",
   className = "",
   isShowreel = false,
+  preloadedVideo,
+  onVideoInView,
 }: VideoThumbnailProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isInView, setIsInView] = useState(false);
-  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
 
   const aspectClasses = aspectRatio === "vertical" ? "aspect-[9/16]" : "aspect-video";
 
-  // Intersection Observer for lazy loading
+  // Intersection Observer for triggering preload
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -39,11 +43,11 @@ export function VideoThumbnail({
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsInView(true);
-          observer.disconnect();
+          onVideoInView?.(src);
         }
       },
       { 
-        rootMargin: '100px',
+        rootMargin: '200px', // Start loading when 200px away
         threshold: 0.1
       }
     );
@@ -51,16 +55,26 @@ export function VideoThumbnail({
     observer.observe(container);
 
     return () => observer.disconnect();
-  }, []);
+  }, [src, onVideoInView]);
 
-  // Load video when in view but don't autoplay
+  // Use preloaded video when available
   useEffect(() => {
-    if (isInView && videoRef.current && !videoLoaded) {
+    if (preloadedVideo && videoRef.current && !videoReady) {
+      const video = videoRef.current;
+      video.src = preloadedVideo.src;
+      video.load();
+      setVideoReady(true);
+    }
+  }, [preloadedVideo, videoReady]);
+
+  // Fallback loading for videos not preloaded
+  useEffect(() => {
+    if (isInView && !preloadedVideo && !videoReady && videoRef.current) {
       const video = videoRef.current;
       video.src = src;
       video.load();
     }
-  }, [isInView, src, videoLoaded]);
+  }, [isInView, src, preloadedVideo, videoReady]);
 
   const handleClick = async () => {
     if (!videoRef.current) return;
@@ -115,40 +129,38 @@ export function VideoThumbnail({
       } ${className}`}
       onClick={handleClick}
     >
-      {/* Single video element that handles both preview and playback */}
-      {isInView && (
-        <video 
-          ref={videoRef}
-          className={`absolute inset-0 w-full h-full ${
-            isFullscreen ? 'object-contain' : 'object-cover'
-          } transition-opacity duration-300 ${videoLoaded ? 'opacity-100' : 'opacity-0'}`}
-          loop={isShowreel}
-          playsInline
-          preload="metadata" // Only load metadata for thumbnail
-          onLoadedData={() => {
-            setVideoLoaded(true);
-            // Seek to 1 second for better thumbnail
-            if (videoRef.current && !hasInteracted) { 
-              videoRef.current.currentTime = 0;
-            }
-          }}
-          onPlay={() => {
-            setIsPlaying(true);
-            setIsLoading(false);
-          }}
-          onPause={() => setIsPlaying(false)}
-          onEnded={() => setIsPlaying(false)}
-          onLoadStart={() => setIsLoading(true)}
-          onCanPlay={() => setIsLoading(false)}
-          onError={() => {
-            setIsLoading(false);
-            console.error('Video failed to load:', src);
-          }}
-        />
-      )}
+      {/* Video element */}
+      <video 
+        ref={videoRef}
+        className={`absolute inset-0 w-full h-full ${
+          isFullscreen ? 'object-contain' : 'object-cover'
+        } transition-opacity duration-300 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
+        loop={isShowreel}
+        playsInline
+        preload="none"
+        onLoadedData={() => {
+          setVideoReady(true);
+          // Seek to 1 second for better thumbnail
+          if (videoRef.current && !hasInteracted) { 
+            videoRef.current.currentTime = 1;
+          }
+        }}
+        onPlay={() => {
+          setIsPlaying(true);
+          setIsLoading(false);
+        }}
+        onPause={() => setIsPlaying(false)}
+        onEnded={() => setIsPlaying(false)}
+        onLoadStart={() => setIsLoading(true)}
+        onCanPlay={() => setIsLoading(false)}
+        onError={() => {
+          setIsLoading(false);
+          console.error('Video failed to load:', src);
+        }}
+      />
 
       {/* Fallback background when video is loading */}
-      {!videoLoaded && (
+      {!videoReady && (
         <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
           <div className="text-white/40 text-center">
             <div className="w-8 h-8 border-2 border-white/20 border-t-white/60 rounded-full animate-spin mx-auto mb-2" />
