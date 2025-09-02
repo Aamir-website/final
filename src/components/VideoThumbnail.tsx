@@ -6,86 +6,62 @@ const isMobile = () => window.innerWidth < 768;
 
 interface VideoThumbnailProps {
   src: string;
+  thumbnailSrc: string;
   title: string;
   aspectRatio?: "video" | "vertical";
   className?: string;
   isShowreel?: boolean;
-  preloadedVideo?: HTMLVideoElement | null;
-  onVideoInView?: (src: string) => void;
 }
 
 export function VideoThumbnail({
   src, 
+  thumbnailSrc,
   title,
   aspectRatio = "video",
   className = "",
   isShowreel = false,
-  preloadedVideo,
-  onVideoInView,
 }: VideoThumbnailProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isInView, setIsInView] = useState(false);
-  const [videoReady, setVideoReady] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
 
   const aspectClasses = aspectRatio === "vertical" ? "aspect-[9/16]" : "aspect-video";
 
-  // Intersection Observer for triggering preload
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+  const handleClick = async () => {
+    if (!videoRef.current) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsInView(true);
-          onVideoInView?.(src);
-        }
-      },
-      { 
-        rootMargin: '200px', // Start loading when 200px away
-        threshold: 0.1
-      }
-    );
-
-    observer.observe(container);
-
-    return () => observer.disconnect();
-  }, [src, onVideoInView]);
-
-  // Use preloaded video when available
-  useEffect(() => {
-    if (preloadedVideo && videoRef.current && !videoReady) {
-      const video = videoRef.current;
-      video.src = preloadedVideo.src;
-      video.load();
-      setVideoReady(true);
-    }
-  }, [preloadedVideo, videoReady]);
-
-  // Fallback loading for videos not preloaded
-  useEffect(() => {
-    if (isInView && !preloadedVideo && !videoReady && videoRef.current) {
+    if (!showVideo) {
+      // First click - load and show video
+      setIsLoading(true);
+      setShowVideo(true);
+      
       const video = videoRef.current;
       video.src = src;
       video.load();
-    }
-  }, [isInView, src, preloadedVideo, videoReady]);
-
-  const handleClick = async () => {
-    if (!videoRef.current) return;
-    setHasInteracted(true);
-
-    if (isPlaying) {
+      
+      // Wait for video to be ready
+      video.oncanplay = async () => {
+        setVideoLoaded(true);
+        setIsLoading(false);
+        try {
+          await video.play();
+          setIsPlaying(true);
+        } catch (error) {
+          console.error('Error playing video:', error);
+          setIsLoading(false);
+        }
+      };
+    } else if (isPlaying) {
+      // Video is playing - pause it
       videoRef.current.pause();
       setIsPlaying(false);
     } else {
+      // Video is paused - play it
       setIsLoading(true);
-      
       try {
         await videoRef.current.play();
         setIsPlaying(true);
@@ -129,42 +105,48 @@ export function VideoThumbnail({
       } ${className}`}
       onClick={handleClick}
     >
-      {/* Video element */}
-      <video 
-        ref={videoRef}
-        className={`absolute inset-0 w-full h-full ${
-          isFullscreen ? 'object-contain' : 'object-cover'
-        } transition-opacity duration-300 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
-        loop={isShowreel}
-        playsInline
-        preload="none"
-        onLoadedData={() => {
-          setVideoReady(true);
-          // Seek to 1 second for better thumbnail
-          if (videoRef.current && !hasInteracted) { 
-            videoRef.current.currentTime = 1;
-          }
-        }}
-        onPlay={() => {
-          setIsPlaying(true);
-          setIsLoading(false);
-        }}
-        onPause={() => setIsPlaying(false)}
-        onEnded={() => setIsPlaying(false)}
-        onLoadStart={() => setIsLoading(true)}
-        onCanPlay={() => setIsLoading(false)}
-        onError={() => {
-          setIsLoading(false);
-          console.error('Video failed to load:', src);
-        }}
-      />
+      {/* Static Thumbnail Image */}
+      {!showVideo && (
+        <img
+          src={thumbnailSrc}
+          alt={`${title} thumbnail`}
+          className={`absolute inset-0 w-full h-full ${
+            isFullscreen ? 'object-contain' : 'object-cover'
+          } transition-opacity duration-300`}
+        />
+      )}
 
-      {/* Fallback background when video is loading */}
-      {!videoReady && (
+      {/* Video element - only rendered when needed */}
+      {showVideo && (
+        <video 
+          ref={videoRef}
+          className={`absolute inset-0 w-full h-full ${
+            isFullscreen ? 'object-contain' : 'object-cover'
+          } transition-opacity duration-300 ${videoLoaded ? 'opacity-100' : 'opacity-0'}`}
+          loop={isShowreel}
+          playsInline
+          preload="none"
+          onPlay={() => {
+            setIsPlaying(true);
+            setIsLoading(false);
+          }}
+          onPause={() => setIsPlaying(false)}
+          onEnded={() => setIsPlaying(false)}
+          onLoadStart={() => setIsLoading(true)}
+          onCanPlay={() => setIsLoading(false)}
+          onError={() => {
+            setIsLoading(false);
+            console.error('Video failed to load:', src);
+          }}
+        />
+      )}
+
+      {/* Loading overlay when video is being loaded */}
+      {showVideo && !videoLoaded && (
         <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
           <div className="text-white/40 text-center">
             <div className="w-8 h-8 border-2 border-white/20 border-t-white/60 rounded-full animate-spin mx-auto mb-2" />
-            <p className="text-xs font-bosenAlt">LOADING</p>
+            <p className="text-xs font-bosenAlt">LOADING VIDEO</p>
           </div>
         </div>
       )}
